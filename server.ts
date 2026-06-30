@@ -4,6 +4,26 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import kdbxweb from 'kdbxweb';
+import argon2 from 'argon2';
+
+kdbxweb.CryptoEngine.setArgon2Impl(async (password, salt, memory, iterations, length, parallelism, type, version) => {
+  try {
+    const hash = await argon2.hash(Buffer.from(new Uint8Array(password)), {
+      timeCost: iterations,
+      memoryCost: memory,
+      parallelism: parallelism,
+      type: type,
+      version: version,
+      salt: Buffer.from(new Uint8Array(salt)),
+      raw: true,
+      hashLength: length
+    });
+    return new Uint8Array(hash).buffer;
+  } catch (err) {
+    console.error('[CRITICAL] Argon2 hash failed:', err);
+    throw err;
+  }
+});
 
 // Ensure data directory exists
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -12,6 +32,15 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9_-]/g, '');
+
+const toArrayBuffer = (buf: Buffer) => {
+  const ab = new ArrayBuffer(buf.length);
+  const view = new Uint8Array(ab);
+  for (let i = 0; i < buf.length; ++i) {
+    view[i] = buf[i];
+  }
+  return ab;
+};
 
 async function startServer() {
   const app = express();
@@ -41,8 +70,8 @@ async function startServer() {
 
       const masterPath = path.join(DATA_DIR, `${masterName}.kdbx`);
 
-      // Convert buffer to ArrayBuffer
-      const uploadedBuffer = new Uint8Array(file.buffer).buffer;
+      // Convert buffer to ArrayBuffer safely
+      const uploadedBuffer = toArrayBuffer(file.buffer);
       const credentials = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString(password));
 
       // Load uploaded DB
@@ -50,13 +79,13 @@ async function startServer() {
       try {
         uploadedDb = await kdbxweb.Kdbx.load(uploadedBuffer, credentials);
       } catch (err) {
-        res.status(401).json({ error: 'Failed to decrypt uploaded database. Incorrect password?' });
+        console.error('DECRYPT ERR:', err); res.status(401).json({ error: 'Failed to decrypt uploaded database. Incorrect password?' });
         return;
       }
 
       // Check if master DB exists
       if (fs.existsSync(masterPath)) {
-        const masterBuffer = new Uint8Array(fs.readFileSync(masterPath)).buffer;
+        const masterBuffer = toArrayBuffer(fs.readFileSync(masterPath));
         let masterDb;
         try {
           masterDb = await kdbxweb.Kdbx.load(masterBuffer, credentials);

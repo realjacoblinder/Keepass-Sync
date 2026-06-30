@@ -1,0 +1,7 @@
+#!/usr/bin/expect -f
+spawn keepassxc-cli db-create test-data/real-test-db.kdbx
+expect "Enter password to encrypt database"
+send "testpassword123\r"
+expect "Repeat password"
+send "testpassword123\r"
+expect eof

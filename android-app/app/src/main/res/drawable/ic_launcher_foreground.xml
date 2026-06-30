@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Padlock body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,52 L66,52 C67.1,52 68,52.9 68,54 L68,72 C68,73.1 67.1,74 66,74 L42,74 C40.9,74 40,73.1 40,72 L40,54 C40,52.9 40.9,52 42,52 Z" />
+    <!-- Padlock shackle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,52 L46,44 C46,39.6 49.6,36 54,36 C58.4,36 62,39.6 62,44 L62,52 L58,52 L58,44 C58,41.8 56.2,40 54,40 C51.8,40 50,41.8 50,44 L50,52 Z" />
+    <!-- Keyhole -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M54,58 C52.3,58 51,59.3 51,61 C51,62.1 51.6,63 52.5,63.5 L52,68 L56,68 L55.5,63.5 C56.4,63 57,62.1 57,61 C57,59.3 55.7,58 54,58 Z" />
+</vector>
