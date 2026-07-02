@@ -1,0 +1,10 @@
+node_modules/
+backend/target/
+data/
+dist/
+.git/
+android-app/
+test-data/
+*.log
+.env*
+!.env.example

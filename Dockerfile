@@ -1,5 +1,5 @@
-# ---- Build Stage ----
-FROM node:22-alpine AS builder
+# ---- Stage 1: Build Frontend ----
+FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -9,25 +9,25 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# ---- Runtime Stage ----
-FROM node:22-alpine
+# ---- Stage 2: Build Rust Backend ----
+FROM rust:1-alpine AS backend-builder
+
+RUN apk add --no-cache musl-dev
+
+WORKDIR /app
+COPY backend/ ./
+RUN cargo build --release
+
+# ---- Stage 3: Runtime ----
+FROM alpine:3.20
 
 WORKDIR /app
 
-# Copy dependency manifests and install production + vite (needed at import time)
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY --from=backend-builder /app/target/release/backend ./backend
+COPY --from=frontend-builder /app/dist ./dist
 
-# Copy built frontend and server source
-COPY --from=builder /app/dist ./dist
-COPY server.ts ./
-
-# Create the data directory for master .kdbx files
 RUN mkdir -p /app/data
-
-ENV NODE_ENV=production
 
 EXPOSE 3000
 
-# tsx is installed as a dependency; use it to run the TypeScript server directly
-CMD ["npx", "tsx", "server.ts"]
+CMD ["./backend"]
